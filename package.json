@@ -12,7 +12,7 @@
   "author": "gavriella-levy-haskell",
   "license": "ISC",
   "dependencies": {
-    "express": "4.14.0",
-    "socket.io": "1.5.1"
+    "express": "4.15.2",
+    "socket.io": "2.0.3"
   }
 }

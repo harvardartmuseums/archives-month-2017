@@ -6,8 +6,7 @@ const server = http.createServer(app);
 const io = require('socket.io')(server);
 const path = require('path');
 
-const fs = require('fs');
-const data = fs.readFileSync('./data/data.json', 'utf8');
+const data = require(path.join(__dirname, '/data/data.json'));
 
 const PORT = process.env.PORT || 3000;
 
