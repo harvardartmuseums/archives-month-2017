@@ -2,6 +2,9 @@
   "name": "archives-month-2017",
   "version": "1.0.0",
   "description": "An interactive Sardis display for Archives Month, 2017",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "express": "^4.15.2",
     "socket.io": "^2.0.3"
