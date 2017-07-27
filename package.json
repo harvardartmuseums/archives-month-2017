@@ -2,14 +2,17 @@
   "name": "archives-month-2017",
   "version": "1.0.0",
   "description": "An interactive Sardis display for Archives Month, 2017",
+  "main": "index.js",
   "engines": {
     "node": "7.10.1"
   },
   "scripts": {
     "start": "node index.js"
   },
+  "author": "gavriella-levy-haskell",
+  "license": "ISC",
   "dependencies": {
-    "express": "4.15.2",
-    "socket.io": "2.0.3"
+    "express": "4.14.0",
+    "socket.io": "1.5.1"
   }
 }
