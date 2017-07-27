@@ -9,19 +9,6 @@ const path = require('path');
 const PORT = process.env.PORT || 3000;
 server.listen(PORT);
 
-var data;
-
-http.get('http://apps.harvardartmuseums.org/archives-month-2017/data.json', (res) => {
-	if (res.statusCode == 200) {
-		var rawData = '';
-		res.setEncoding('utf8');
-		res.on('data', (d) => {rawData += d;});
-		res.on('end', () => {
-			data = rawData;
-		});
-	} 
-});
-
 
 app.get('/index.html', function(req, res){
 	res.sendFile(path.join(__dirname, '/index.html'));
@@ -47,7 +34,20 @@ var focus;
 var processedData = [];
 
 screensIO.on('connection', function(socket) {
-	socket.emit('data', (processedData.length? processedData : data), focus);
+	if (processedData.length == 0) {
+		http.get('http://apps.harvardartmuseums.org/archives-month-2017/data.JSON', (res) => {
+			if (res.statusCode == 200) {
+				var rawData = '';
+				res.setEncoding('utf8');
+				res.on('data', (d) => {rawData += d;});
+				res.on('end', () => {
+					socket.emit('data', rawData, focus);
+				});
+			} 
+		});
+	} else {
+		socket.emit('data', processedData, focus);
+	}
 
 	socket.on('updateData', function (d) {
 		processedData.push(d);
