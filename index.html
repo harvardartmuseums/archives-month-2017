@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<title>Archives</title>
+
+<style>
+body, html {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+	overflow: hidden;
+	font-size: 300%;
+}
+
+#loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: wait;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	background-color: #191A1A;
+	z-index: 2001;
+	opacity: 1;
+	transition: opacity 1s;
+	pointer-events: none;
+}
+
+#loading div {
+	position: relative;
+}
+
+#loadingbarframe {
+	position: relative;
+	display: inline-block;
+	text-align: left;
+	width: 30vw;
+	height: 1vw;
+	background-color: #343332;
+}
+
+#loadingbar {
+	box-sizing: border-box;
+	position: absolute;
+	display: inline-block;
+	top: 0px;
+	left: 0px;
+	width: 0%;
+	height: 100%;
+	transition: width .1s;
+	background-color: #191A1A;
+	border: .1vw solid #343332;
+}
+#nodes {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+.node {
+	position: absolute;
+	color: #ffffff;
+	overflow: hidden;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	flex-direction: column;
+	text-align: center;
+	pointer-events: none;
+}
+.node span {
+	width: 100%;
+	text-align: center;
+	flex-shrink: 1;
+}
+.node .content {
+	flex-grow: 1;
+}
+.node .content video {
+	width: 100%;
+	height: 100%;
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="graph"></div>
+
+<div id="nodes"></div>
+
+<div id="loading"><div><span id="loadingbarframe"><span id="loadingbar"></span></span></div></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/d3.min.js"></script>
+<script>
+var socket = io('/screens-namespace');
+
+var svg;
+
+var width;
+var height;
+var radius;
+var margin;
+
+var root;
+var view;
+
+var focusedNode;
+
+var node;
+var text;
+
+var video;
+var audio;
+
+var simulation;
+
+socket.on('data', setChart);
+
+function getRadius(d) {
+	return (1 + d.height)*1620;
+}
+
+function parseNode(i) {
+	nodes[i] = JSON.parse(nodes[i]);
+
+	if (nodes[i].parent != undefined) {
+		nodes[i].parent = nodes[nodes[i].parent];
+	} 
+
+	if (nodes[i].children) {
+		for (var j = 0; j < nodes[i].children.length; j++) {
+			nodes[i].children[j] = parseNode(nodes[i].children[j]);
+		}
+	}
+	return nodes[i];
+}
+
+function setChart(data, focus) {
+	width = window.innerWidth;
+	height = window.innerHeight;
+	radius = Math.min(width, height)/2;
+	margin = Math.ceil(radius/10);
+	
+	svg = d3.select("#graph").append("svg");
+	svg.attr("width", width);
+	svg.attr("height", height);
+	svg.style("background", "#ffffff");
+	
+	svg = svg.append("g");
+
+	if (focus != undefined) {
+		nodes = data;
+		
+		root = parseNode(0);
+		focusedNode = nodes[focus];
+
+		finish(true);
+	} else {
+		nodes = d3.hierarchy(JSON.parse(data), function(d) {
+			if (d.nodes.length == 0) {
+				return null;
+			} else {
+				return d.nodes;
+			}
+		}).descendants();
+
+		root = nodes[0];
+		focusedNode = root;
+
+		var links = [];
+
+		for (var i = 0; i < nodes.length; i++) {
+			nodes[i].r = getRadius(nodes[i]);
+			links = links.concat(nodes[i].links());
+		}
+
+		simulation = d3.forceSimulation();
+		simulation.force("link", d3.forceLink().strength(1));
+		simulation.force("collide", d3.forceCollide(function(d) {return d.r + 162}));
+		simulation.force("center", d3.forceCenter(2880, 1620));
+
+		simulation.nodes(nodes).on("tick", ticked).on("end", finish);
+
+		simulation.force("link").links(links);
+	}
+}
+
+function ticked() {
+	document.getElementById("loadingbar").style.width = 100*(1 - (simulation.alpha() - simulation.alphaMin())) + "%";
+}
+
+function finish(oldData) {
+	document.getElementById("loading").style.opacity = 0;
+	document.getElementById("loading").style.cursor = "default";
+
+	node = svg.append("g").attr("class", "nodes").selectAll("circle").data(nodes).enter().append("circle").attr("r", function(d) {return d.r}).attr("cx", function(d) {return d.x}).attr("cy", function(d) {return d.y}).attr("fill", "#000000");
+
+	text = d3.select("#nodes").selectAll("div").data(nodes).enter().append("div");
+	text.style("width", function(d) {return smallestSquareInCircle(d.r) + "px"});
+	text.style("height", function(d) {return smallestSquareInCircle(d.r) + "px"});
+	text.style("left", function(d) {return (d.x - smallestSquareInCircle(d.r)/2) + "px"});
+	text.style("top", function(d) {return (d.y - smallestSquareInCircle(d.r)/2) + "px"});
+	text.attr("class", "node");
+	text.style("font-size", function (d) {return Math.sqrt(d.r*200) + "px"});
+
+	var textOnly = text.filter(function(d) {return d.data.type == "text" && d.data.content});
+	var image = text.filter(function(d) {return d.data.type == "image" && d.data.content});
+	audio = text.filter(function(d) {return d.data.type == "audio" && d.data.content});
+	video = text.filter(function(d) {return d.data.type == "video" && d.data.content});
+
+	text.filter(function(d) {return d.data.title}).append("span").html(function(d) {return d.data.title});
+
+
+	textOnly.append("span").attr("class", "content").style("font-size", "20%").html(function(d) {return d.data.content});
+
+	image.append("span").attr("class", "content").style("background", function (d) {return "url('data/" + d.data.content + "') no-repeat center center/contain"});
+
+	audio = audio.append("span").attr("class", "content").style("background", function(d) {return (d.data.content[1]? "url('data/" + d.data.content[1] + "') no-repeat center center/contain" : "")}).append("audio").attr("loop", "true").attr("src", function(d) {return "data/" + d.data.content[0]});
+
+	video = video.append("span").attr("class", "content").append("video").attr("loop", "true").attr("src", function(d) {return "data/" + d.data.content});
+
+
+	text.filter(function(d) {return d.data.caption}).append("span").style("font-size", "10%").html(function(d) {return d.data.caption});
+
+	if (!oldData) {
+		for (var i = 0; i < nodes.length; i++) {
+			socket.emit("updateData", JSON.stringify(nodes[i], collapseStructure));
+		}
+	}
+
+	zoomTo([root.x, root.y, root.r]);
+	zoom(focusedNode.index);
+
+	socket.on("zoom", zoom);
+	socket.on("unzoom", unZoom);
+}
+
+function collapseStructure(key, value) {
+	switch (key) {
+		case "parent":
+			return (value? value.index : value);
+		case "children":
+			return value.map(function(d) {return d.index});
+		default:
+			return value;
+	}
+}
+
+function smallestSquareInCircle(radius) {
+	return Math.sqrt(Math.pow(2*radius, 2)/2);
+}
+
+function smallestView(circles) {
+	var minX = Infinity;
+	var maxX = -Infinity;
+	var minY = Infinity;
+	var maxY = -Infinity;
+	var r = 0;
+
+	var c;
+	for (var i = 0; i < circles.length; i++) {
+		c = circles[i];
+		if ((c.x - c.r) < minX) {
+			minX = c.x - c.r;
+		}
+		if ((c.x + c.r) > maxX) {
+			maxX = c.x + c.r;
+		}
+		if ((c.y - c.r) < minY) {
+			minY = c.y - c.r;
+		}
+		if ((c.y + c.r) > maxY) {
+			maxY = c.y + c.r;
+		}
+	}
+
+	var w = maxX - minX;
+	var h = maxY - minY;
+	if (radius == height/2) {
+		if (w/h > width/height) {
+			r = w/width*height/2;
+		} else {
+			r = h/2;
+		}
+	} else {
+		if (w/h > width/height) {
+			r = w/2;
+		} else {
+			r = h/height*width/2;
+		}
+	}
+	return {x: (minX + maxX)/2, y: (minY + maxY)/2, r: r};
+}
+
+function unZoom() {
+	if (focusedNode != root) {
+		zoom(focusedNode.parent.index);
+	}
+}
+
+function zoom(i) {
+	d = nodes[i];
+
+	focusedNode = d;
+	
+	var newView = focusedNode;
+	
+	if (d.children) {
+		newView = smallestView(d.children.concat(d));
+	} 
+
+	var transition = d3.transition().duration(2000).tween("zoom", function(d) {var i = function(t) {
+		return [
+			view[0]*(1 - t) + newView.x*t,
+			view[1]*(1 - t) + newView.y*t,
+			view[2]*(1 - t) + newView.r*t
+		]
+	}; return function(t) {zoomTo(i(t))}});
+
+	text.transition().duration(2000).style("opacity", function(d) {return (d == focusedNode || d.parent == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1))? "1" : "0"}).style("display", function(d) {return (d == focusedNode || d.parent == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1))? "flex" : "none"});
+
+	node.transition().duration(2000).style("opacity", function(d) {return (d == focusedNode || d.parent == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1))? "1" : "0"}).style("display", function(d) {return (d == focusedNode || d.parent == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1))? "block" : "none"});
+
+	video.transition().delay(2000).each(function(d) {if (d == focusedNode) {this.currentTime = 0; this.muted = false; this.play()} else if (d.parent == focusedNode) {this.muted = true; this.play()} else {this.pause(); this.currentTime = 0;}});
+
+	audio.transition().delay(2000).each(function(d) {if (d == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1)) {this.play()} else {this.pause(); this.currentTime = 0;}});
+
+	if (d3.event) {
+		d3.event.stopPropagation();
+	}
+}
+
+function zoomTo(v) {
+	var k = radius / v[2]; 
+	view = v;
+	svg.attr("transform", function(d) {return "translate(" + (width/2 - v[0]*k) + ",  " + (height/2 - v[1]*k) + ") scale(" + k + ", " + k + ")"});
+	d3.select("#nodes").style("transform", function(d) {return "translate(" + (width/2 - v[0]*k) + "px,  " + (height/2 - v[1]*k) + "px) scale(" + k + ", " + k + ")"});
+}
+
+</script>
+</body>
+</html>

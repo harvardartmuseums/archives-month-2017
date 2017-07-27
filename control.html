@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<title>Archives</title>
+
+<style>
+body, html {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+	overflow: hidden;
+	background-color: #000000;
+	font-size: 22px;
+}
+
+#loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: wait;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	background-color: #191A1A;
+	z-index: 2001;
+	opacity: 1;
+	transition: opacity 1s;
+	pointer-events: none;
+}
+
+#loading div {
+	position: relative;
+}
+
+#loadingbarframe {
+	position: relative;
+	display: inline-block;
+	text-align: left;
+	width: 30vw;
+	height: 1vw;
+	background-color: #343332;
+}
+
+#loadingbar {
+	box-sizing: border-box;
+	position: absolute;
+	display: inline-block;
+	top: 0px;
+	left: 0px;
+	width: 0%;
+	height: 100%;
+	transition: width .1s;
+	background-color: #191A1A;
+	border: .1vw solid #343332;
+}
+#nodes {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+.node {
+	position: absolute;
+	color: #ffffff;
+	overflow: hidden;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	flex-direction: column;
+	text-align: center;
+	pointer-events: none;
+}
+.node span {
+	width: 100%;
+	text-align: center;
+	flex-shrink: 1;
+}
+.node .content {
+	flex-grow: 1;
+}
+#prompt {
+	position: absolute;
+	width: 100%;
+	height: 5%;
+	top: 95%;
+	left: 0%;
+	color: #ffffff;
+	overflow: hidden;
+	text-align: center;
+	pointer-events: none;
+}
+</style>
+
+</head>
+
+<body>
+<div id="graph"></div>
+<div id="prompt">Tap the white circles to navigate through the section; tap anywhere else to return to the previous section</div>
+
+<div id="loading"><div><span id="loadingbarframe"><span id="loadingbar"></span></span></div></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/d3.min.js"></script>
+<script>
+var socket = io('/control-namespace');
+
+var svg;
+
+var width;
+var height;
+var radius;
+var margin;
+
+var root;
+var view;
+
+var focusedNode;
+
+var node;
+var nodes;
+
+socket.on('data', setChart);
+
+function parseNode(i) {
+	nodes[i] = JSON.parse(nodes[i]);
+
+	if (nodes[i].parent != undefined) {
+		nodes[i].parent = nodes[nodes[i].parent];
+	} 
+
+	if (nodes[i].children) {
+		for (var j = 0; j < nodes[i].children.length; j++) {
+			nodes[i].children[j] = parseNode(nodes[i].children[j]);
+		}
+	}
+	return nodes[i];
+}
+
+function setChart(data, focus) {
+	width = window.innerWidth;
+	height = window.innerHeight*.95;
+	radius = Math.min(width, height)/2;
+	margin = Math.ceil(radius/10);
+	
+	svg = d3.select("#graph").append("svg");
+	svg.attr("width", width);
+	svg.attr("height", height);
+	svg.style("background", "#000000");
+	svg.on("click", unZoomEmit);
+	
+	svg = svg.append("g");
+
+	nodes = data;
+		
+	root = parseNode(0);
+
+	document.getElementById("loading").style.opacity = 0;
+	document.getElementById("loading").style.cursor = "default";
+
+	node = svg.append("g").attr("class", "nodes").selectAll("circle").data(nodes).enter().append("circle").attr("r", function(d) {return d.r}).attr("cx", function(d) {return d.x}).attr("cy", function(d) {return d.y}).attr("fill", "#ffffff");
+	node.on("click", zoomEmit);
+
+	zoomTo([root.x, root.y, root.r]);
+	zoom(focus);
+
+	socket.on("zoom", zoom);
+
+	socket.on("unzoom", unZoom);
+}
+
+function smallestSquareInCircle(radius) {
+	return Math.sqrt(Math.pow(2*radius, 2)/2);
+}
+
+function smallestView(circles) {
+	var minX = Infinity;
+	var maxX = -Infinity;
+	var minY = Infinity;
+	var maxY = -Infinity;
+	var r = 0;
+
+	var c;
+	for (var i = 0; i < circles.length; i++) {
+		c = circles[i];
+		if ((c.x - c.r) < minX) {
+			minX = c.x - c.r;
+		}
+		if ((c.x + c.r) > maxX) {
+			maxX = c.x + c.r;
+		}
+		if ((c.y - c.r) < minY) {
+			minY = c.y - c.r;
+		}
+		if ((c.y + c.r) > maxY) {
+			maxY = c.y + c.r;
+		}
+	}
+
+	var w = maxX - minX;
+	var h = maxY - minY;
+	if (radius == height/2) {
+		if (w/h > width/height) {
+			r = w/width*height/2;
+		} else {
+			r = h/2;
+		}
+	} else {
+		if (w/h > width/height) {
+			r = w/2;
+		} else {
+			r = h/height*width/2;
+		}
+	}
+	return {x: (minX + maxX)/2, y: (minY + maxY)/2, r: r};
+}
+
+function zoomEmit(d) {
+	socket.emit('zoom', d.index);
+
+	if (d3.event) {
+		d3.event.stopPropagation();
+	}
+}
+
+function unZoomEmit() {
+	socket.emit('unzoom', focusedNode.parent.index || 0);
+}
+
+function unZoom() {
+	if (focusedNode != root) {
+		zoom(focusedNode.parent.index);
+	}
+}
+
+function zoom(i) {
+	d = nodes[i];
+	if (focusedNode != d) {
+		focusedNode = d;
+	
+		var newView = focusedNode;
+
+		if (d.children) {
+			newView = smallestView(d.children.concat(d));
+		} 
+
+		var transition = d3.transition().duration(2000).tween("zoom", function(d) {var i = function(t) {
+			return [
+				view[0]*(1 - t) + newView.x*t,
+				view[1]*(1 - t) + newView.y*t,
+				view[2]*(1 - t) + newView.r*t
+			]
+		}; return function(t) {zoomTo(i(t))}});
+
+		node.transition().duration(2000).style("opacity", function(d) {return (d == focusedNode || d.parent == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1))? "1" : "0"}).style("fill", function(d) {return (d == focusedNode)? "#555555" : "#ffffff"}).style("display", function(d) {return (d == focusedNode || d.parent == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1))? "block" : "none"});
+	}
+}
+
+function zoomTo(v) {
+	var k = radius / v[2]; 
+	view = v;
+	svg.attr("transform", function(d) {return "translate(" + (width/2 - v[0]*k) + ",  " + (height/2 - v[1]*k) + ") scale(" + k + ", " + k + ")"});
+}
+
+</script>
+</body>
+</html>
