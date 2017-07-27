@@ -221,11 +221,11 @@ function finish(oldData) {
 
 	textOnly.append("span").attr("class", "content").style("font-size", "20%").html(function(d) {return d.data.content});
 
-	image.append("span").attr("class", "content").style("background", function (d) {return "url('data/" + d.data.content + "') no-repeat center center/contain"});
+	image.append("span").attr("class", "content").style("background", function (d) {return "url('apps.harvardartmuseums.org/archives-month-2017/" + d.data.content + "') no-repeat center center/contain"});
 
-	audio = audio.append("span").attr("class", "content").style("background", function(d) {return (d.data.content[1]? "url('data/" + d.data.content[1] + "') no-repeat center center/contain" : "")}).append("audio").attr("loop", "true").attr("src", function(d) {return "data/" + d.data.content[0]});
+	audio = audio.append("span").attr("class", "content").style("background", function(d) {return (d.data.content[1]? "url('apps.harvardartmuseums.org/archives-month-2017/" + d.data.content[1] + "') no-repeat center center/contain" : "")}).append("audio").attr("loop", "true").attr("src", function(d) {return "apps.harvardartmuseums.org/archives-month-2017/" + d.data.content[0]});
 
-	video = video.append("span").attr("class", "content").append("video").attr("loop", "true").attr("src", function(d) {return "data/" + d.data.content});
+	video = video.append("span").attr("class", "content").append("video").attr("loop", "true").attr("src", function(d) {return "apps.harvardartmuseums.org/archives-month-2017/" + d.data.content});
 
 
 	text.filter(function(d) {return d.data.caption}).append("span").style("font-size", "10%").html(function(d) {return d.data.caption});
