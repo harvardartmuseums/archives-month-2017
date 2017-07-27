@@ -9,7 +9,7 @@ const path = require('path');
 const PORT = process.env.PORT || 3000;
 server.listen(PORT);
 
-const data = require('./data/data.json', 'utf8');
+const data = require('apps.harvardartmuseums.org/archives-month-2017/data.json', 'utf8');
 
 
 app.get('/index.html', function(req, res){
