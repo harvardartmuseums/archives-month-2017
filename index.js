@@ -6,7 +6,8 @@ const server = http.createServer(app);
 const io = require('socket.io')(server);
 const path = require('path');
 
-const data = require(path.join(__dirname, '/data/data.json'));
+//const data = require(path.join(__dirname, '/data/data.json'));
+const data = "{\"title\": \"\", \"content\": \"\", \"caption\": \"\", \"nodes\": []}";
 
 const PORT = process.env.PORT || 3000;
 
