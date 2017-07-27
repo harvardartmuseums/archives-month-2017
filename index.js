@@ -21,7 +21,7 @@ app.get('/control.html', function(req, res){
 });
 
 app.get('/data/:file', function(req, res) {
-	res.sendFile(path.join(__dirname, '/data/' + req.params.file));
+	res.sendFile('apps.harvardartmuseums.org/archives-month-2017/' + req.params.file);
 });
 
 app.get('/js/d3.min.js', function(req, res) {
