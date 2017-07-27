@@ -9,7 +9,18 @@ const path = require('path');
 const PORT = process.env.PORT || 3000;
 server.listen(PORT);
 
-const data = require('apps.harvardartmuseums.org/archives-month-2017/data.json', 'utf8');
+var data;
+
+http.get('http://apps.harvardartmuseums.org/archives-month-2017/data.json', (res) => {
+	if (res.statusCode == 200) {
+		var rawData = '';
+		res.setEncoding('utf8');
+		res.on('data', (d) => {rawData += d;});
+		res.on('end', () => {
+			data = rawData;
+		});
+	} 
+});
 
 
 app.get('/index.html', function(req, res){
