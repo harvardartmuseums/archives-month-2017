@@ -6,9 +6,6 @@ const server = http.createServer(app);
 const io = require('socket.io')(server);
 const path = require('path');
 
-//const data = require(path.join(__dirname, '/data/data.json'));
-const data = "{\"title\": \"\", \"content\": \"\", \"caption\": \"\", \"nodes\": []}";
-
 const PORT = process.env.PORT || 3000;
 
 app.get('/index.html', function(req, res){
@@ -26,6 +23,8 @@ app.get('/data/:file', function(req, res) {
 app.get('/js/d3.min.js', function(req, res) {
 	res.sendFile(path.join(__dirname, '/js/d3.min.js'));
 });
+
+const data = require('./data/data.json');
 
 var screensIO = io.of('/screens-namespace');
 var controlIO = io.of('/control-namespace');
