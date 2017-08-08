@@ -28,9 +28,13 @@ var controlIO = io.of('/control-namespace');
 var focus;
 
 var processedData = [];
+var loaded = 0;
+var toLoad = 0;
+var loading = false;
 
 screensIO.on('connection', function(socket) {
-	if (processedData.length == 0) {
+	if (processedData.length == 0 && !loading) {
+		loading = true;
 		http.get('http://apps.harvardartmuseums.org/archives-month-2017/data.JSON', (res) => {
 			if (res.statusCode == 200) {
 				var rawData = '';
@@ -41,18 +45,26 @@ screensIO.on('connection', function(socket) {
 				});
 			} 
 		});
-	} else {
+	} else if (!loading) {
 		socket.emit('data', processedData, focus);
 	}
 
-	socket.on('updateData', function (d) {
+	socket.on('updateData', function (d, total) {
+		toLoad = total;
 		processedData.push(d);
-		focus = 0;
+		loaded++;
+		if (loaded == toLoad) {
+			loading = false;
+			focus = 0;
+			socket.broadcast.emit('data', processedData, focus);
+		}
 	});
 });
 
 controlIO.on('connection', function(socket) {
-	socket.emit('data', (processedData.length? processedData : data), focus);
+	if (processedData.length && !loading) {
+		socket.emit('data', processedData, focus);
+	}
 
 	socket.on('zoom', function(i) {
 		focus = i;
