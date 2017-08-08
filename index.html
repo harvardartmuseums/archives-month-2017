@@ -208,6 +208,8 @@ function finish(oldData) {
 
 	node = svg.append("g").attr("class", "nodes").selectAll("circle").data(nodes).enter().append("circle").attr("r", function(d) {return d.r}).attr("cx", function(d) {return d.x}).attr("cy", function(d) {return d.y}).attr("fill", "#000000");
 
+	console.log(nodes);
+
 	text = d3.select("#nodes").selectAll("div").data(nodes).enter().append("div");
 	text.style("width", function(d) {return smallestSquareInCircle(d.r) + "px"});
 	text.style("height", function(d) {return smallestSquareInCircle(d.r) + "px"});
@@ -216,7 +218,7 @@ function finish(oldData) {
 	text.attr("class", "node");
 	text.style("font-size", function (d) {return Math.sqrt(d.r*200) + "px"});
 
-	var textOnly = text.filter(function(d) {console.log(d); return d.data.type == "text" && d.data.content});
+	var textOnly = text.filter(function(d) {return d.data.type == "text" && d.data.content});
 	var image = text.filter(function(d) {return d.data.type == "image" && d.data.content});
 	audio = text.filter(function(d) {return d.data.type == "audio" && d.data.content});
 	video = text.filter(function(d) {return d.data.type == "video" && d.data.content});
