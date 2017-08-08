@@ -150,6 +150,10 @@ function parseNode(i) {
 }
 
 function setChart(data, focus) {
+	if (svg) {
+		return;
+	}
+	
 	width = window.innerWidth;
 	height = window.innerHeight;
 	radius = Math.min(width, height)/2;
