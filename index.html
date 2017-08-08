@@ -13,6 +13,7 @@ body, html {
 	box-sizing: border-box;
 	overflow: hidden;
 	font-size: 300%;
+	font-family: 'Josefin Sans', sans-serif;
 }
 
 #loading {
@@ -87,6 +88,8 @@ body, html {
 }
 </style>
 
+<link href="https://fonts.googleapis.com/css?family=Josefin+Sans" rel="stylesheet">
+
 </head>
 
 <body>
@@ -144,6 +147,8 @@ function parseNode(i) {
 }
 
 function setChart(data, focus) {
+	console.log(data, focus);
+
 	width = window.innerWidth;
 	height = window.innerHeight;
 	radius = Math.min(width, height)/2;
@@ -221,11 +226,11 @@ function finish(oldData) {
 
 	textOnly.append("span").attr("class", "content").style("font-size", "20%").html(function(d) {return d.data.content});
 
-	image.append("span").attr("class", "content").style("background", function (d) {return "url('http://apps.harvardartmuseums.org/archives-month-2017/" + d.data.content + "') no-repeat center center/contain"});
+	image.append("span").attr("class", "content").style("background", function (d) {return "url('" + d.data.content + "') no-repeat center center/contain"});
 
-	audio = audio.append("span").attr("class", "content").style("background", function(d) {return (d.data.content[1]? "url('http://apps.harvardartmuseums.org/archives-month-2017/" + d.data.content[1] + "') no-repeat center center/contain" : "")}).append("audio").attr("loop", "true").attr("src", function(d) {return "http://apps.harvardartmuseums.org/archives-month-2017/" + d.data.content[0]});
+	audio = audio.append("span").attr("class", "content").style("background", function(d) {return (d.data.content[1]? "url('" + d.data.content[1] + "') no-repeat center center/contain" : "")}).append("audio").attr("loop", "true").attr("src", function(d) {return d.data.content[0]});
 
-	video = video.append("span").attr("class", "content").append("video").attr("loop", "true").attr("src", function(d) {return "http://apps.harvardartmuseums.org/archives-month-2017/" + d.data.content});
+	video = video.append("span").attr("class", "content").append("video").attr("loop", "true").attr("src", function(d) {return d.data.content});
 
 
 	text.filter(function(d) {return d.data.caption}).append("span").style("font-size", "10%").html(function(d) {return d.data.caption});
@@ -329,7 +334,7 @@ function zoom(i) {
 
 	node.transition().duration(2000).style("opacity", function(d) {return (d == focusedNode || d.parent == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1))? "1" : "0"}).style("display", function(d) {return (d == focusedNode || d.parent == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1))? "block" : "none"});
 
-	video.transition().delay(2000).each(function(d) {if (d == focusedNode) {this.currentTime = 0; this.muted = false; this.play()} else if (d.parent == focusedNode) {this.muted = true; this.play()} else {this.pause(); this.currentTime = 0;}});
+	video.transition().delay(2000).each(function(d) {if (d == focusedNode) {this.currentTime = 0; this.muted = false; this.play()} else if (d.parent == focusedNode) {this.muted = true; this.play()} else {this.pause()}});
 
 	audio.transition().delay(2000).each(function(d) {if (d == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1)) {this.play()} else {this.pause(); this.currentTime = 0;}});
 
