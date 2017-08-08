@@ -128,7 +128,7 @@ var audio;
 
 var simulation;
 
-socket.on('data', setChart);
+socket.once('data', setChart);
 
 function getRadius(d) {
 	return (1 + d.height)*1620;
@@ -150,10 +150,6 @@ function parseNode(i) {
 }
 
 function setChart(data, focus) {
-	if (node) {
-		return;
-	}
-	
 	width = window.innerWidth;
 	height = window.innerHeight;
 	radius = Math.min(width, height)/2;
