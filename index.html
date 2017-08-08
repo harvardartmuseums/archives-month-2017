@@ -82,6 +82,9 @@ body, html {
 .node .content {
 	flex-grow: 1;
 }
+.node .content.text {
+	flex-grow: 0;
+}
 .node .content video {
 	width: 100%;
 	height: 100%;
@@ -224,7 +227,7 @@ function finish(oldData) {
 	text.filter(function(d) {return d.data.title}).append("span").html(function(d) {return d.data.title});
 
 
-	textOnly.append("span").attr("class", "content").style("font-size", "20%").html(function(d) {return d.data.content});
+	textOnly.append("span").attr("class", "content text").style("font-size", "90%").html(function(d) {return d.data.content});
 
 	image.append("span").attr("class", "content").style("background", function (d) {return "url('" + d.data.content + "') no-repeat center center/contain"});
 
