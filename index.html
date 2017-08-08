@@ -240,7 +240,7 @@ function finish(oldData) {
 
 	if (!oldData) {
 		for (var i = 0; i < nodes.length; i++) {
-			socket.emit("updateData", JSON.stringify(nodes[i], collapseStructure));
+			socket.emit("updateData", JSON.stringify(nodes[i], collapseStructure), nodes.length);
 		}
 	}
 
