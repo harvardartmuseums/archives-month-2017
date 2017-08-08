@@ -56,7 +56,7 @@ screensIO.on('connection', function(socket) {
 		if (loaded == toLoad) {
 			loading = false;
 			focus = 0;
-			socket.broadcast.emit('data', processedData, focus);
+			socket.to(controlIO).to(screensIO).emit('data', processedData, focus);
 		}
 	});
 });
