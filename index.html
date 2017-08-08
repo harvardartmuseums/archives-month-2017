@@ -216,9 +216,7 @@ function finish(oldData) {
 	text.attr("class", "node");
 	text.style("font-size", function (d) {return Math.sqrt(d.r*200) + "px"});
 
-	console.log(data);
-
-	var textOnly = text.filter(function(d) {return d.data.type == "text" && d.data.content});
+	var textOnly = text.filter(function(d) {console.log(d); return d.data.type == "text" && d.data.content});
 	var image = text.filter(function(d) {return d.data.type == "image" && d.data.content});
 	audio = text.filter(function(d) {return d.data.type == "audio" && d.data.content});
 	video = text.filter(function(d) {return d.data.type == "video" && d.data.content});
