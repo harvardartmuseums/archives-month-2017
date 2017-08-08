@@ -336,7 +336,7 @@ function zoom(i) {
 
 	video.transition().delay(2000).each(function(d) {if (d == focusedNode) {this.currentTime = 0; this.muted = false; this.play()} else if (d.parent == focusedNode) {this.muted = true; this.play()} else {this.pause()}});
 
-	audio.transition().delay(2000).each(function(d) {if (d == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1)) {this.play()} else {this.pause(); this.currentTime = 0;}});
+	audio.transition().delay(2000).each(function(d) {if (d == focusedNode || (d.children && d.children.indexOf(focusedNode) != -1)) {this.play()} else {this.pause()}});
 
 	if (d3.event) {
 		d3.event.stopPropagation();
