@@ -9,7 +9,9 @@ Note that the framework, which uses d3 to display zoomable nodes controllable on
 where type is "image", "text", "audio", or "video", content is, respectively, the URL of an image, text, a list [] with the URL of an audio file and then the URL of an image, or the URL of a video, and nodes holds any children nodes, which follow the same format.
 
 The project can be viewed at:
+
 http://archives-month-2017.herokuapp.com/index.html
+
 http://archives-month-2017.herokuapp.com/control.html
 
 ## Requirements
