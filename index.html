@@ -227,7 +227,7 @@ function finish(oldData) {
 	text.filter(function(d) {return d.data.title}).append("span").html(function(d) {return d.data.title});
 
 //Math.pow(d.r*3, 1/1.7)
-	textOnly.append("span").attr("class", "content text").style("font-size", function(d) {return Math.pow(d.r/200, 1.5) + "px"}).html(function(d) {return d.data.content});
+	textOnly.append("span").attr("class", "content text").style("font-size", function(d) {return Math.pow(d.r/50, 1.5) + "px"}).html(function(d) {return d.data.content});
 
 	image.append("span").attr("class", "content").style("background", function (d) {return "url('" + d.data.content + "') no-repeat center center/contain"});
 
